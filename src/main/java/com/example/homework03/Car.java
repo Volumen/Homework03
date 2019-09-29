@@ -1,10 +1,15 @@
 package com.example.homework03;
 
-public class Car {
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.ResourceSupport;
+
+public class Car extends ResourceSupport {
     private long id;
     private String mark;
     private String model;
     private String color;
+
+
 
     public Car(long id, String mark, String model, String color) {
         this.id = id;
@@ -13,10 +18,11 @@ public class Car {
         this.color = color;
     }
 
+
     public Car() {
     }
 
-    public long getId() {
+    public long getIdOfCar() {
         return id;
     }
 
@@ -46,5 +52,14 @@ public class Car {
 
     public void setColor(String color) {
         this.color = color;
+    }
+    @Override
+    public String toString() {
+        return "Car{" +
+                "id=" + id +
+                ", mark='" + mark + '\'' +
+                ", model='" + model + '\'' +
+                ", color='" + color + '\'' +
+                '}';
     }
 }

@@ -1,8 +1,14 @@
 package com.example.homework03;
 
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 import javax.websocket.server.PathParam;
 import java.util.ArrayList;
@@ -10,22 +16,38 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+
 @RestController
-@RequestMapping("/cars")
-public class CarApi {
+@RequestMapping(value = "/cars", produces = {
+        MediaType.APPLICATION_JSON_VALUE,
+        MediaType.APPLICATION_XML_VALUE})
+public class CarController {
 
     List<Car> list;
 
-    public CarApi() {
+    public CarController() {
         this.list = new ArrayList<>();
         list.add(new Car(1L,"Fiat","Punto","green"));
         list.add(new Car(2L,"Opel","Astra","black"));
         list.add(new Car(3L,"Mercedes","GLC","red"));
     }
 
-    @GetMapping
+    @GetMapping()
     public ResponseEntity<List<Car>> getCars()
     {
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+    @GetMapping("/hateoas/cars")
+    public ResponseEntity<List<Car>> getHATEOASCars()
+    {
+        Link link;
+        for(int i = 0; i<list.size(); i++)
+        {
+            link = ControllerLinkBuilder.linkTo(methodOn(CarController.class)
+                    .getCarsById(list.get(i).getIdOfCar()))
+                    .withSelfRel();
+            list.get(i).add(link);
+        }
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
@@ -34,7 +56,7 @@ public class CarApi {
     {
         Optional<Car> optionalCar = list
                 .stream()
-                .filter(car -> car.getId()==id)
+                .filter(car -> car.getIdOfCar()==id)
                 .findFirst();
         if(optionalCar.isPresent())
         {
@@ -70,7 +92,7 @@ public class CarApi {
     {
         Optional<Car> optionalCar = list
                 .stream()
-                .filter(car -> car.getId() == newCar.getId())
+                .filter(car -> car.getIdOfCar() == newCar.getIdOfCar())
                 .findFirst();
         if(optionalCar.isPresent())
         {
@@ -85,7 +107,7 @@ public class CarApi {
     {
         Optional<Car> optionalCarCar = list
                 .stream()
-                .filter(car -> car.getId() == modifyCarField.getId())
+                .filter(car -> car.getIdOfCar() == modifyCarField.getIdOfCar())
                 .findFirst();
         if(optionalCarCar.isPresent()) {
             if(modifyCarField.getMark() != null){optionalCarCar.get().setMark(modifyCarField.getMark());}
@@ -96,18 +118,17 @@ public class CarApi {
         return new ResponseEntity(HttpStatus.NOT_MODIFIED);
     }
     @DeleteMapping
-    public ResponseEntity<Car> deleteCarField(@RequestBody(required = false) Car deleteCarField)
+    public ResponseEntity<Car> deleteCar(@RequestBody(required = false) long id)
     {
         Optional<Car> optionalCar = list
                 .stream()
-                .filter(car -> car.getId() == deleteCarField.getId())
+                .filter(car -> car.getIdOfCar() == id)
                 .findFirst();
-        if(optionalCar.isPresent()) {
-            if(deleteCarField.getMark() != null){ optionalCar.get().setMark(""); }
-            if(deleteCarField.getModel() != null){ optionalCar.get().setModel("");}
-            if(deleteCarField.getColor() != null){optionalCar.get().setColor("");}
-            return new ResponseEntity<>(HttpStatus.GONE);
+        if(optionalCar.isPresent())
+        {
+            list.remove(optionalCar.get());
+            return new ResponseEntity<>(HttpStatus.OK);
         }
-        return new ResponseEntity(HttpStatus.NOT_MODIFIED);
+        return new ResponseEntity(HttpStatus.NOT_FOUND);
     }
 }
